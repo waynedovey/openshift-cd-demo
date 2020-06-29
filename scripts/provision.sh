@@ -19,11 +19,12 @@ function usage() {
     echo "   delete                   Clean up and remove demo projects and objects"
     echo "   idle                     Make all demo services idle"
     echo "   unidle                   Make all demo services unidle"
-    echo 
+    echo
     echo "OPTIONS:"
-    echo "   --enable-quay              Optional    Enable integration of build and deployments with quay.io"
-    echo "   --quay-username            Optional    quay.io username to push the images to a quay.io account. Required if --enable-quay is set"
-    echo "   --quay-password            Optional    quay.io password to push the images to a quay.io account. Required if --enable-quay is set"
+    echo "   --enable-quay              Optional    Enable integration of build and deployments with quay"
+    echo "   --quay-url                 Optional    quay URL to push the images to a quay. Required if --enable-quay is set"
+    echo "   --quay-username            Optional    quay username to push the images to a quay account. Required if --enable-quay is set"
+    echo "   --quay-password            Optional    quay password to push the images to a quay account. Required if --enable-quay is set"
     echo "   --user [username]          Optional    The admin user for the demo projects. Required if logged in as system:admin"
     echo "   --project-suffix [suffix]  Optional    Suffix to be added to demo project names e.g. ci-SUFFIX. If empty, user will be used as suffix"
     echo "   --ephemeral                Optional    Deploy demo without persistent storage. Default false"
@@ -37,6 +38,7 @@ ARG_COMMAND=
 ARG_EPHEMERAL=false
 ARG_OC_OPS=
 ARG_ENABLE_QUAY=false
+ARG_QUAY_URL=
 ARG_QUAY_USER=
 ARG_QUAY_PASS=
 
@@ -86,6 +88,16 @@ while :; do
             ;;
         --enable-quay)
             ARG_ENABLE_QUAY=true
+            ;;
+        --quay-url)
+            if [ -n "$2" ]; then
+                ARG_QUAY_URL=$2
+                shift
+            else
+                printf 'ERROR: "--quay-url" requires a non-empty value.\n' >&2
+                usage
+                exit 255
+            fi
             ;;
         --quay-username)
             if [ -n "$2" ]; then
@@ -154,7 +166,7 @@ function deploy() {
     oc $ARG_OC_OPS adm policy add-role-to-user admin $ARG_USERNAME -n dev-$PRJ_SUFFIX >/dev/null 2>&1
     oc $ARG_OC_OPS adm policy add-role-to-user admin $ARG_USERNAME -n stage-$PRJ_SUFFIX >/dev/null 2>&1
     oc $ARG_OC_OPS adm policy add-role-to-user admin $ARG_USERNAME -n cicd-$PRJ_SUFFIX >/dev/null 2>&1
-    
+
     oc $ARG_OC_OPS annotate --overwrite namespace dev-$PRJ_SUFFIX   demo=openshift-cd-$PRJ_SUFFIX >/dev/null 2>&1
     oc $ARG_OC_OPS annotate --overwrite namespace stage-$PRJ_SUFFIX demo=openshift-cd-$PRJ_SUFFIX >/dev/null 2>&1
     oc $ARG_OC_OPS annotate --overwrite namespace cicd-$PRJ_SUFFIX  demo=openshift-cd-$PRJ_SUFFIX >/dev/null 2>&1
@@ -170,7 +182,7 @@ function deploy() {
 
   local template=https://raw.githubusercontent.com/$GITHUB_ACCOUNT/openshift-cd-demo/$GITHUB_REF/cicd-template.yaml
   echo "Using template $template"
-  oc $ARG_OC_OPS new-app -f $template -p DEV_PROJECT=dev-$PRJ_SUFFIX -p STAGE_PROJECT=stage-$PRJ_SUFFIX -p EPHEMERAL=$ARG_EPHEMERAL -p ENABLE_QUAY=$ARG_ENABLE_QUAY -p QUAY_USERNAME=$ARG_QUAY_USER -p QUAY_PASSWORD=$ARG_QUAY_PASS -n cicd-$PRJ_SUFFIX 
+  oc $ARG_OC_OPS new-app -f $template -p DEV_PROJECT=dev-$PRJ_SUFFIX -p STAGE_PROJECT=stage-$PRJ_SUFFIX -p EPHEMERAL=$ARG_EPHEMERAL -p QUAY_URL=$ARG_QUAY_URL -p ENABLE_QUAY=$ARG_ENABLE_QUAY -p QUAY_USERNAME=$ARG_QUAY_USER -p QUAY_PASSWORD=$ARG_QUAY_PASS -n cicd-$PRJ_SUFFIX
 }
 
 function make_idle() {
@@ -245,7 +257,7 @@ case "$ARG_COMMAND" in
         echo
         echo "Delete completed successfully!"
         ;;
-      
+
     idle)
         echo "Idling demo..."
         make_idle
@@ -266,7 +278,7 @@ case "$ARG_COMMAND" in
         echo
         echo "Provisioning completed successfully!"
         ;;
-        
+
     *)
         echo "Invalid command specified: '$ARG_COMMAND'"
         usage
