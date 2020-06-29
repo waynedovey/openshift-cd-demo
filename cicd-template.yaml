@@ -33,20 +33,34 @@ parameters:
   value: "false"
   name: ENABLE_QUAY
   required: true
-- displayName: Quay URL
-  description: Quay URL to push the images to tasks-sample-app
-  name: QUAY_URL
-- displayName: Quay Username
-  description: Quay username to push the images to tasks-sample-app repository on your Quay account
-  name: QUAY_USERNAME
-- displayName: Quay Password
-  description: Quay password to push the images to tasks-sample-app repository on your Quay account
-  name: QUAY_PASSWORD
-- displayName: Quay Image Repository
-  description: Quay repository for pushing Tasks container images
-  name: QUAY_REPOSITORY
+- displayName: Untrusted Quay URL
+  description: Untrusted Quay URL to push the images to untrusted-tasks-app
+  name: UNTRUSTED_QUAY_URL
+- displayName: Untrusted Quay Username
+  description: Untrusted Quay username to push the images to untrusted-tasks-app repository on your Quay account
+  name: UNTRUSTED_QUAY_USERNAME
+- displayName: Untrusted Quay Password
+  description: Untrusted Quay password to push the images to untrusted-tasks-app repository on your Quay account
+  name: UNTRUSTED_QUAY_PASSWORD
+- displayName: Untrusted Quay Image Repository
+  description: Untrusted Quay repository for pushing Tasks container images
+  name: UNTRUSTED_QUAY_REPOSITORY
   required: true
-  value: tasks-app
+  value: untrusted-tasks-app
+- displayName: Trusted Quay URL
+  description: Trusted Quay URL to push the images to trusted-tasks-app
+  name: TRUSTED_QUAY_URL
+- displayName: Trusted Quay Username
+  description: Trusted Quay username to push the images to trusted-tasks-app repository on your Quay account
+  name: TRUSTED_QUAY_USERNAME
+- displayName: Trusted Quay Password
+  description: Trusted Quay password to push the images to trusted-tasks-app repository on your Quay account
+  name: TRUSTED_QUAY_PASSWORD
+- displayName: Trusted Quay Image Repository
+  description: Trusted Quay repository for pushing Tasks container images
+  name: TRUSTED_QUAY_REPOSITORY
+  required: true
+  value: trusted-tasks-app
 objects:
 - apiVersion: v1
   groupNames: null
@@ -155,8 +169,8 @@ objects:
                   script {
                     openshift.withCluster() {
                       if (env.ENABLE_QUAY.toBoolean()) {
-                        withCredentials([usernamePassword(credentialsId: "${openshift.project()}-quay-cicd-secret", usernameVariable: "QUAY_USER", passwordVariable: "QUAY_PWD")]) {
-                          sh "skopeo copy docker://${QUAY_URL}/${QUAY_USERNAME}/${QUAY_REPOSITORY}:latest docker://${QUAY_URL}/${QUAY_USERNAME}/${QUAY_REPOSITORY}:stage --src-creds \"$QUAY_USER:$QUAY_PWD\" --dest-creds \"$QUAY_USER:$QUAY_PWD\" --src-tls-verify=false --dest-tls-verify=false"
+                        withCredentials([usernamePassword(credentialsId: "${openshift.project()}-quay-cicd-secret", usernameVariable: "TRUSTED_QUAY_USER", passwordVariable: "TRUSTED_QUAY_PWD")]) {
+                          sh "skopeo copy docker://${UNTRUSTED_QUAY_URL}/${UNTRUSTED_QUAY_USERNAME}/${UNTRUSTED_QUAY_REPOSITORY}:latest docker://${TRUSTED_QUAY_URL}/${TRUSTED_QUAY_USERNAME}/${TRUSTED_QUAY_REPOSITORY}:stage --src-creds \"$UNTRUSTED_QUAY_USER:$UNTRUSTED_QUAY_PWD\" --dest-creds \"$TRUSTED_QUAY_USER:$TRUSTED_QUAY_PWD\" --src-tls-verify=false --dest-tls-verify=false"
                         }
                       } else {
                         openshift.tag("${env.DEV_PROJECT}/tasks:latest", "${env.STAGE_PROJECT}/tasks:stage")
@@ -288,21 +302,21 @@ objects:
 
             if [ "${ENABLE_QUAY}" == "true" ] ; then
               # cicd
-              oc create secret generic quay-cicd-secret --from-literal="username=${QUAY_USERNAME}" --from-literal="password=${QUAY_PASSWORD}" -n ${CICD_NAMESPACE}
+              oc create secret generic quay-cicd-secret --from-literal="username=${UNTRUSTED_QUAY_USERNAME}" --from-literal="password=${UNTRUSTED_QUAY_PASSWORD}" -n ${CICD_NAMESPACE}
               oc label secret quay-cicd-secret credential.sync.jenkins.openshift.io=true -n ${CICD_NAMESPACE}
 
               # dev
-              oc create secret docker-registry quay-cicd-secret --docker-server=${QUAY_URL} --docker-username="${QUAY_USERNAME}" --docker-password="${QUAY_PASSWORD}" --docker-email=cicd@redhat.com -n ${DEV_PROJECT}
-              oc new-build --name=tasks --image-stream=wildfly:latest --binary=true --push-secret=quay-cicd-secret --to-docker --to='${QUAY_URL}/${QUAY_USERNAME}/${QUAY_REPOSITORY}:latest' -n ${DEV_PROJECT}
-              oc new-app --name=tasks --docker-image=${QUAY_URL}/${QUAY_USERNAME}/${QUAY_REPOSITORY}:latest --allow-missing-images -n ${DEV_PROJECT}
+              oc create secret docker-registry quay-cicd-secret --docker-server=${UNTRUSTED_QUAY_URL} --docker-username="${UNTRUSTED_QUAY_USERNAME}" --docker-password="${UNTRUSTED_QUAY_PASSWORD}" --docker-email=cicd@redhat.com -n ${DEV_PROJECT}
+              oc new-build --name=tasks --image-stream=wildfly:latest --binary=true --push-secret=quay-cicd-secret --to-docker --to='${UNTRUSTED_QUAY_URL}/${UNTRUSTED_QUAY_USERNAME}/${QUAY_REPOSITORY}:latest' -n ${DEV_PROJECT}
+              oc new-app --name=tasks --docker-image=${UNTRUSTED_QUAY_URL}/${UNTRUSTED_QUAY_USERNAME}/${QUAY_REPOSITORY}:latest --allow-missing-images -n ${DEV_PROJECT}
               oc set triggers dc tasks --remove-all -n ${DEV_PROJECT}
               oc patch dc tasks -p '{"spec": {"template": {"spec": {"containers": [{"name": "tasks", "imagePullPolicy": "Always"}]}}}}' -n ${DEV_PROJECT}
               oc delete is tasks -n ${DEV_PROJECT}
               oc secrets link default quay-cicd-secret --for=pull -n ${DEV_PROJECT}
 
               # stage
-              oc create secret docker-registry quay-cicd-secret --docker-server=${QUAY_URL} --docker-username="${QUAY_USERNAME}" --docker-password="${QUAY_PASSWORD}" --docker-email=cicd@redhat.com -n ${STAGE_PROJECT}
-              oc new-app --name=tasks --docker-image=${QUAY_URL}/${QUAY_USERNAME}/${QUAY_REPOSITORY}:stage --allow-missing-images -n ${STAGE_PROJECT}
+              oc create secret docker-registry quay-cicd-secret --docker-server=${TRUSTED_QUAY_URL} --docker-username="${TRUSTED_QUAY_USERNAME}" --docker-password="${TRUSTED_QUAY_PASSWORD}" --docker-email=cicd@redhat.com -n ${STAGE_PROJECT}
+              oc new-app --name=tasks --docker-image=${TRUSTED_QUAY_URL}/${TRUSTED_QUAY_USERNAME}/${TRUSTED_QUAY_REPOSITORY}:stage --allow-missing-images -n ${STAGE_PROJECT}
               oc set triggers dc tasks --remove-all -n ${STAGE_PROJECT}
               oc patch dc tasks -p '{"spec": {"template": {"spec": {"containers": [{"name": "tasks", "imagePullPolicy": "Always"}]}}}}' -n ${STAGE_PROJECT}
               oc delete is tasks -n ${STAGE_PROJECT}

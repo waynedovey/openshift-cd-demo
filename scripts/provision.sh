@@ -22,9 +22,12 @@ function usage() {
     echo
     echo "OPTIONS:"
     echo "   --enable-quay              Optional    Enable integration of build and deployments with quay"
-    echo "   --quay-url                 Optional    quay URL to push the images to a quay. Required if --enable-quay is set"
-    echo "   --quay-username            Optional    quay username to push the images to a quay account. Required if --enable-quay is set"
-    echo "   --quay-password            Optional    quay password to push the images to a quay account. Required if --enable-quay is set"
+    echo "   --untrusted-quay-url       Optional    Untrusted quay URL to push the images to a quay. Required if --enable-quay is set"
+    echo "   --untrusted-quay-username  Optional    Untrusted quay username to push the images to a quay account. Required if --enable-quay is set"
+    echo "   --untrusted-quay-password  Optional    Untrusted quay password to push the images to a quay account. Required if --enable-quay is set"
+    echo "   --trusted-quay-url         Optional    Trusted quay URL to push the images to a quay. Required if --enable-quay is set"
+    echo "   --trusted-quay-username    Optional    Trusted quay username to push the images to a quay account. Required if --enable-quay is set"
+    echo "   --trusted-quay-password    Optional    Trusted quay password to push the images to a quay account. Required if --enable-quay is set"
     echo "   --user [username]          Optional    The admin user for the demo projects. Required if logged in as system:admin"
     echo "   --project-suffix [suffix]  Optional    Suffix to be added to demo project names e.g. ci-SUFFIX. If empty, user will be used as suffix"
     echo "   --ephemeral                Optional    Deploy demo without persistent storage. Default false"
@@ -38,9 +41,12 @@ ARG_COMMAND=
 ARG_EPHEMERAL=false
 ARG_OC_OPS=
 ARG_ENABLE_QUAY=false
-ARG_QUAY_URL=
-ARG_QUAY_USER=
-ARG_QUAY_PASS=
+ARG_UNTRUSTED_QUAY_URL=
+ARG_UNTRUSTED_QUAY_USER=
+ARG_UNTRUSTED_QUAY_PASS=
+ARG_TRUSTED_QUAY_URL=
+ARG_TRUSTED_QUAY_USER=
+ARG_TRUSTED_QUAY_PASS=
 
 while :; do
     case $1 in
@@ -89,32 +95,62 @@ while :; do
         --enable-quay)
             ARG_ENABLE_QUAY=true
             ;;
-        --quay-url)
+        --untrusted-quay-url)
             if [ -n "$2" ]; then
-                ARG_QUAY_URL=$2
+                ARG_UNTRUSTED_QUAY_URL=$2
                 shift
             else
-                printf 'ERROR: "--quay-url" requires a non-empty value.\n' >&2
+                printf 'ERROR: "--untrusted-quay-url" requires a non-empty value.\n' >&2
                 usage
                 exit 255
             fi
             ;;
-        --quay-username)
+        --untrusted-quay-username)
             if [ -n "$2" ]; then
-                ARG_QUAY_USER=$2
+                ARG_UNTRUSTED_USER=$2
                 shift
             else
-                printf 'ERROR: "--quay-username" requires a non-empty value.\n' >&2
+                printf 'ERROR: "--untrusted-quay-username" requires a non-empty value.\n' >&2
                 usage
                 exit 255
             fi
             ;;
-        --quay-password)
+        --untrusted-quay-password)
             if [ -n "$2" ]; then
-                ARG_QUAY_PASS=$2
+                ARG_UNTRUSTED_PASS=$2
                 shift
             else
-                printf 'ERROR: "--quay-password" requires a non-empty value.\n' >&2
+                printf 'ERROR: "--untrusted-quay-password" requires a non-empty value.\n' >&2
+                usage
+                exit 255
+            fi
+            ;;
+        --trusted-quay-url)
+            if [ -n "$2" ]; then
+                ARG_TRUSTED_QUAY_URL=$2
+                shift
+            else
+                printf 'ERROR: "--trusted-quay-url" requires a non-empty value.\n' >&2
+                usage
+                exit 255
+            fi
+            ;;
+        --trusted-quay-username)
+            if [ -n "$2" ]; then
+                ARG_TRUSTED_USER=$2
+                shift
+            else
+                printf 'ERROR: "--trusted-quay-username" requires a non-empty value.\n' >&2
+                usage
+                exit 255
+            fi
+            ;;
+        --trusted-quay-password)
+            if [ -n "$2" ]; then
+                ARG_TRUSTED_PASS=$2
+                shift
+            else
+                printf 'ERROR: "--trusted-quay-password" requires a non-empty value.\n' >&2
                 usage
                 exit 255
             fi
@@ -182,7 +218,7 @@ function deploy() {
 
   local template=https://raw.githubusercontent.com/$GITHUB_ACCOUNT/openshift-cd-demo/$GITHUB_REF/cicd-template.yaml
   echo "Using template $template"
-  oc $ARG_OC_OPS new-app -f $template -p DEV_PROJECT=dev-$PRJ_SUFFIX -p STAGE_PROJECT=stage-$PRJ_SUFFIX -p EPHEMERAL=$ARG_EPHEMERAL -p QUAY_URL=$ARG_QUAY_URL -p ENABLE_QUAY=$ARG_ENABLE_QUAY -p QUAY_USERNAME=$ARG_QUAY_USER -p QUAY_PASSWORD=$ARG_QUAY_PASS -n cicd-$PRJ_SUFFIX
+  oc $ARG_OC_OPS new-app -f $template -p DEV_PROJECT=dev-$PRJ_SUFFIX -p STAGE_PROJECT=stage-$PRJ_SUFFIX -p EPHEMERAL=$ARG_EPHEMERAL -p UNTRUSTED_QUAY_URL=$ARG_UNTRUSTED_QUAY_URL -p ENABLE_QUAY=$ARG_ENABLE_QUAY -p UNTRUSTED_QUAY_USERNAME=$ARG_UNTRUSTED_QUAY_USER -p UNTRUSTED_QUAY_PASSWORD=$ARG_UNTRUSTED_QUAY_PASS -p TRUSTED_QUAY_URL=$ARG_TRUSTED_QUAY_URL -p TRUSTED_QUAY_USERNAME=$ARG_TRUSTED_QUAY_USER -p TRUSTED_QUAY_PASSWORD=$ARG_TRUSTED_QUAY_PASS -n cicd-$PRJ_SUFFIX
 }
 
 function make_idle() {
