@@ -308,7 +308,7 @@ objects:
               # dev
               oc create secret docker-registry quay-cicd-secret --docker-server=${UNTRUSTED_QUAY_URL} --docker-username="${UNTRUSTED_QUAY_USERNAME}" --docker-password="${UNTRUSTED_QUAY_PASSWORD}" --docker-email=cicd@redhat.com -n ${DEV_PROJECT}
               oc new-build --name=tasks --image-stream=wildfly:latest --binary=true --push-secret=quay-cicd-secret --to-docker --to='${UNTRUSTED_QUAY_URL}/${UNTRUSTED_QUAY_USERNAME}/${UNTRUSTED_QUAY_REPOSITORY}:latest' -n ${DEV_PROJECT}
-              oc new-app --name=tasks --docker-image=${UNTRUSTED_QUAY_URL}/${UNTRUSTED_QUAY_USERNAME}/${UNTRUSTED_QUAY_REPOSITORY}:latest --allow-missing-images -n ${DEV_PROJECT}
+              oc new-app --name=tasks --docker-image='${UNTRUSTED_QUAY_URL}/${UNTRUSTED_QUAY_USERNAME}/${UNTRUSTED_QUAY_REPOSITORY}:latest' --allow-missing-images -n ${DEV_PROJECT}
               oc set triggers dc tasks --remove-all -n ${DEV_PROJECT}
               oc patch dc tasks -p '{"spec": {"template": {"spec": {"containers": [{"name": "tasks", "imagePullPolicy": "Always"}]}}}}' -n ${DEV_PROJECT}
               oc delete is tasks -n ${DEV_PROJECT}
@@ -316,7 +316,7 @@ objects:
 
               # stage
               oc create secret docker-registry quay-cicd-secret --docker-server=${TRUSTED_QUAY_URL} --docker-username="${TRUSTED_QUAY_USERNAME}" --docker-password="${TRUSTED_QUAY_PASSWORD}" --docker-email=cicd@redhat.com -n ${STAGE_PROJECT}
-              oc new-app --name=tasks --docker-image=${TRUSTED_QUAY_URL}/${TRUSTED_QUAY_USERNAME}/${TRUSTED_QUAY_REPOSITORY}:stage --allow-missing-images -n ${STAGE_PROJECT}
+              oc new-app --name=tasks --docker-image='${TRUSTED_QUAY_URL}/${TRUSTED_QUAY_USERNAME}/${TRUSTED_QUAY_REPOSITORY}:stage' --allow-missing-images -n ${STAGE_PROJECT}
               oc set triggers dc tasks --remove-all -n ${STAGE_PROJECT}
               oc patch dc tasks -p '{"spec": {"template": {"spec": {"containers": [{"name": "tasks", "imagePullPolicy": "Always"}]}}}}' -n ${STAGE_PROJECT}
               oc delete is tasks -n ${STAGE_PROJECT}
