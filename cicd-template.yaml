@@ -170,7 +170,7 @@ objects:
                     openshift.withCluster() {
                       if (env.ENABLE_QUAY.toBoolean()) {
                         withCredentials([usernamePassword(credentialsId: "${openshift.project()}-quay-cicd-secret", usernameVariable: "QUAY_USER", passwordVariable: "QUAY_PWD")]) {
-                          sh "skopeo copy docker://${UNTRUSTED_QUAY_URL}/quay/${UNTRUSTED_QUAY_REPOSITORY}:latest docker://${TRUSTED_QUAY_URL}/quay/${TRUSTED_QUAY_REPOSITORY}:stage --src-creds \"$UNTRUSTED_QUAY_USER:$UNTRUSTED_QUAY_PWD\" --dest-creds \"$TRUSTED_QUAY_USER:$TRUSTED_QUAY_PWD\" --src-tls-verify=false --dest-tls-verify=false"
+                          sh "skopeo copy docker://${UNTRUSTED_QUAY_URL}/quay/${UNTRUSTED_QUAY_REPOSITORY}:latest docker://${TRUSTED_QUAY_URL}/quay/${TRUSTED_QUAY_REPOSITORY}:stage --src-creds \"$QUAY_USER:$QUAY_PWD\" --dest-creds \"$QUAY_USER:$QUAY_PWD\" --src-tls-verify=false --dest-tls-verify=false"
                         }
                       } else {
                         openshift.tag("${env.DEV_PROJECT}/tasks:latest", "${env.STAGE_PROJECT}/tasks:stage")
