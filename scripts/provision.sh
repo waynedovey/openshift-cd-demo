@@ -107,7 +107,7 @@ while :; do
             ;;
         --untrusted-quay-username)
             if [ -n "$2" ]; then
-                ARG_UNTRUSTED_USER=$2
+                ARG_UNTRUSTED_QUAY_USER=$2
                 shift
             else
                 printf 'ERROR: "--untrusted-quay-username" requires a non-empty value.\n' >&2
@@ -117,7 +117,7 @@ while :; do
             ;;
         --untrusted-quay-password)
             if [ -n "$2" ]; then
-                ARG_UNTRUSTED_PASS=$2
+                ARG_UNTRUSTED_QUAY_PASS=$2
                 shift
             else
                 printf 'ERROR: "--untrusted-quay-password" requires a non-empty value.\n' >&2
@@ -137,7 +137,7 @@ while :; do
             ;;
         --trusted-quay-username)
             if [ -n "$2" ]; then
-                ARG_TRUSTED_USER=$2
+                ARG_TRUSTED_QUAY_USER=$2
                 shift
             else
                 printf 'ERROR: "--trusted-quay-username" requires a non-empty value.\n' >&2
@@ -147,7 +147,7 @@ while :; do
             ;;
         --trusted-quay-password)
             if [ -n "$2" ]; then
-                ARG_TRUSTED_PASS=$2
+                ARG_TRUSTED_QUAY_PASS=$2
                 shift
             else
                 printf 'ERROR: "--trusted-quay-password" requires a non-empty value.\n' >&2
