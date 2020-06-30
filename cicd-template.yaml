@@ -46,7 +46,7 @@ parameters:
   description: Untrusted Quay repository for pushing Tasks container images
   name: UNTRUSTED_QUAY_REPOSITORY
   required: true
-  value: tasks-app
+  value: untrusted-tasks-app
 - displayName: Trusted Quay URL
   description: Trusted Quay URL to push the images to trusted-tasks-app
   name: TRUSTED_QUAY_URL
@@ -60,7 +60,7 @@ parameters:
   description: Trusted Quay repository for pushing Tasks container images
   name: TRUSTED_QUAY_REPOSITORY
   required: true
-  value: tasks-app
+  value: trusted-tasks-app
 objects:
 - apiVersion: v1
   groupNames: null
